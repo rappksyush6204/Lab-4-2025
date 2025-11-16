@@ -108,7 +108,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
     public LinkedListTabulatedFunction(FunctionPoint[] points) {
         if (points.length < 2) {
             throw new IllegalArgumentException("Количество точек не может быть меньше двух");
-        }
+        }   
         
         // Проверяем упорядоченность по X с учетом машинного эпсилона
         for (int i = 0; i < points.length - 1; i++) {
@@ -387,28 +387,49 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
     }
     
     @Override
-    public double getFunctionValue(double x) {
+        public double getFunctionValue(double x) {
+        // проверяем, есть ли точки в функции
         if (pointsCount == 0) {
             return Double.NaN;
         }
         
+        // получаем границы области определения
         double leftBorder = getLeftDomainBorder();
         double rightBorder = getRightDomainBorder();
         
+        // проверяем, что x в области определения
         if (x < leftBorder - 1e-10 || x > rightBorder + 1e-10) {
             return Double.NaN;
         }
         
-        // Линейная интерполяция между точками
-        for (int i = 0; i < pointsCount - 1; i++) {
-            double x1 = getPointX(i);
-            double x2 = getPointX(i + 1);
+        // оптимизация: проверяем точное совпадение с существующими точками
+        FunctionNode current = head.getNext(); // начинаем с первой точки
+        while (current != head) { // проходим по всем точкам
+            if (Math.abs(x - current.getPoint().getX()) < 1e-10) {
+                return current.getPoint().getY(); // возвращаем значение существующей точки
+            }
+            current = current.getNext(); // переходим к следующей точке
+        }
+        
+        // линейная интерполяция между точками
+        FunctionNode prev = head.getNext(); // предыдущая точка
+        FunctionNode next = prev.getNext(); // следующая точка
+        
+        while (next != head) { // проходим по всем отрезкам
+            double x1 = prev.getPoint().getX();
+            double x2 = next.getPoint().getX();
             
+            // проверяем, попадает ли x в текущий отрезок
             if (x >= x1 - 1e-10 && x <= x2 + 1e-10) {
-                double y1 = getPointY(i);
-                double y2 = getPointY(i + 1);
+                double y1 = prev.getPoint().getY();
+                double y2 = next.getPoint().getY();
+                // линейная интерполяция
                 return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
             }
+            
+            // переходим к следующему отрезку
+            prev = next;
+            next = next.getNext();
         }
         
         return Double.NaN;

@@ -108,24 +108,34 @@ public class ArrayTabulatedFunction implements TabulatedFunction, Serializable, 
     }
 
     public double getFunctionValue(double x) {
-        if (x < getLeftDomainBorder() - 1e-10 || x > getRightDomainBorder() + 1e-10) {
-            return Double.NaN;
-        }
-
-        for (int i = 0; i < pointsCount - 1; i++) {
-            double x1 = points[i].getX();
-            double x2 = points[i + 1].getX();
-            
-            if (x >= x1 - 1e-10 && x <= x2 + 1e-10) {
-                double y1 = points[i].getY();
-                double y2 = points[i + 1].getY();
-                
-                return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
-            }
-        }
-        
-        return Double.NaN;
+    // проверяем, что x находится в области определения функции
+    if (x < getLeftDomainBorder() - 1e-10 || x > getRightDomainBorder() + 1e-10) {
+        return Double.NaN; // возвращаем "не число", если x вне области определения
     }
+
+    // проверяем точное совпадение с существующими точками
+    for (int i = 0; i < pointsCount; i++) {
+        if (Math.abs(x - points[i].getX()) < 1e-10) {
+            return points[i].getY(); 
+        }
+    }
+
+    // если точного совпадения нет, используем линейную интерполяцию
+    for (int i = 0; i < pointsCount - 1; i++) {
+        double x1 = points[i].getX(); // левая граница отрезка
+        double x2 = points[i + 1].getX(); // правая граница отрезка
+        
+        // проверяем, что x попадает в текущий отрезок (с учетом погрешности)
+        if (x >= x1 - 1e-10 && x <= x2 + 1e-10) {
+            double y1 = points[i].getY(); // значение в левой границе
+            double y2 = points[i + 1].getY(); // значение в правой границе
+            
+            // линейная интерполяция: y = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+            return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
+        }
+    }
+    return Double.NaN;
+}
 
     // МЕТОДЫ ДЛЯ РАБОТЫ С ТОЧКАМИ:
     
