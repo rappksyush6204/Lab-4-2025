@@ -1,0 +1,14 @@
+# Java compiled classes
+*.class
+
+# System files
+.DS_Store
+
+# Build directories
+target/
+bin/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
