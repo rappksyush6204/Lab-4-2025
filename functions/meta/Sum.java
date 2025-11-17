@@ -3,31 +3,14 @@ package functions.meta;
 import functions.Function;
 import java.io.*;
 
-public class Sum implements Function, Serializable, Externalizable {
+public class Sum implements Function, Serializable {
     private static final long serialVersionUID = 1L;
     private Function f1;
     private Function f2;
     
-    // Конструктор без параметров для Externalizable
-    public Sum() {
-    }
-    
     public Sum(Function f1, Function f2) {
         this.f1 = f1;
         this.f2 = f2;
-    }
-    
-    // Реализация Externalizable
-    @Override
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeObject(f1);
-        out.writeObject(f2);
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        f1 = (Function) in.readObject();
-        f2 = (Function) in.readObject();
     }
     
     // Реализация Function

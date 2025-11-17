@@ -1,6 +1,5 @@
 import functions.*;
 import functions.basic.*;
-import functions.meta.*;
 import java.io.*;
 
 public class Main {
@@ -19,8 +18,8 @@ public class Main {
             testInputOutput();
             
             // Тестирование задания 9: Сериализация
-            testSerialization();
-            testExternalizableSerialization(); // добавляем тестирование externalizable
+            testSerialization(); // тестируем Serializable (ArrayTabulatedFunction, Sum, Mult)
+            testExternalizableSerialization(); // тестируем Externalizable (LinkedListTabulatedFunction, Power, Composition)
 
             
         } catch (Exception e) {
@@ -163,146 +162,127 @@ public class Main {
     }
     
     private static void testSerialization() throws IOException, ClassNotFoundException {
-        System.out.println("5. Тестирование сериализации:");
+        System.out.println("5. Тестирование Serializable:");
     
-        // Создаем композицию: ln(e^x) = x (теоретически должна быть равна x)
+        // 1. Тестируем ArrayTabulatedFunction (Serializable)
+        System.out.println("  ArrayTabulatedFunction (Serializable):");
         Exp exp = new Exp();
         Log log = new Log(Math.E);
         Function composition = Functions.composition(log, exp);
-    
-        // Табулируем композицию на отрезке [0, 10] с 11 точками
-        TabulatedFunction tabulated = TabulatedFunctions.tabulate(composition, 0, 10, 11);
-    
-        System.out.println("  Исходная функция (ln(e^x)) - все 11 точек:");
-        for (int i = 0; i < tabulated.getPointsCount(); i++) {
-            double x = tabulated.getPointX(i);
-            double y = tabulated.getPointY(i);
-            System.out.printf("  x=%.1f: y=%.6f (ожидается: %.1f)%n", x, y, x);
+        TabulatedFunction arrayFunc = TabulatedFunctions.tabulate(composition, 0, 10, 11);
+
+        String arrayFile = "array_serializable.ser";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(arrayFile))) {
+            oos.writeObject(arrayFunc);
         }
-    
-        // Сериализация в файл
-        String filename = "tabulated_function.ser";
-        try (ObjectOutputStream oos = new ObjectOutputStream( new FileOutputStream(filename))) {
-            oos.writeObject(tabulated);
-        }
-    
-        System.out.println(" Функция сериализована в файл: " + filename);
-    
-        // Десериализация из файла
-        TabulatedFunction deserialized;
-        try (ObjectInputStream ois = new ObjectInputStream( new FileInputStream(filename))) {
-            deserialized = (TabulatedFunction) ois.readObject();
-        }
-    
-        System.out.println(" Десериализованная функция - все 11 точек:");
-        for (int i = 0; i < deserialized.getPointsCount(); i++) {
-            double x = deserialized.getPointX(i);
-            double y = deserialized.getPointY(i);
-            double original = tabulated.getPointY(i);
-            System.out.printf("  x=%.1f: исходная=%.6f, восстановленная=%.6f, разница=%.6f%n", 
-                x, original, y, Math.abs(original - y));
-        }
-    
-        // Проверяем размер файла
-        File file = new File(filename);
-        System.out.printf(" Размер файла сериализации: %d байт%n", file.length());
         
-        file.delete();
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(arrayFile))) {
+            TabulatedFunction deserializedArray = (TabulatedFunction) ois.readObject();
+            System.out.println("  Восстановлено точек: " + deserializedArray.getPointsCount());
+        }
+        
+        System.out.println("  ArrayTabulatedFunction успешно сериализована через Serializable");
+        
+        // 2. Тестируем мета-функции с Serializable (Sum, Mult)
+        System.out.println("  Мета-функции Sum и Mult (Serializable):");
+        Sin sin = new Sin();
+        Cos cos = new Cos();
+        
+        // Sum с Serializable
+        Function sumFunc = Functions.sum(sin, cos);
+        String sumFile = "sum_serializable.ser";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(sumFile))) {
+            oos.writeObject(sumFunc);
+        }
+        
+        Function deserializedSum;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(sumFile))) {
+            deserializedSum = (Function) ois.readObject();
+        }
+        System.out.println("  Sum успешно сериализован через Serializable");
+        
+        // Mult с Serializable  
+        Function multFunc = Functions.mult(sin, cos);
+        String multFile = "mult_serializable.ser";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(multFile))) {
+            oos.writeObject(multFunc);
+        }
+        
+        Function deserializedMult;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(multFile))) {
+            deserializedMult = (Function) ois.readObject();
+        }
+        System.out.println("  Mult успешно сериализован через Serializable");
+        
+        // Удаляем временные файлы
+        new File(arrayFile).delete();
+        new File(sumFile).delete();
+        new File(multFile).delete();
         
         System.out.println();
     }
+    
     private static void testExternalizableSerialization() throws IOException, ClassNotFoundException {
-        System.out.println("7. тестирование сериализации через externalizable:");
-    
-        System.out.println("  создаем табулированную функцию натурального логарифма...");
-        // создаем функцию натурального логарифма
-        Log log = new Log(Math.E);
-        // табулируем функцию на отрезке [1, 10] с 10 точками
-        TabulatedFunction tabulated = TabulatedFunctions.tabulate(log, 1, 10, 10);
-    
-        System.out.println("  исходная функция (10 точек натурального логарифма):");
-        // выводим все точки исходной функции
-        for (int i = 0; i < tabulated.getPointsCount(); i++) {
-            System.out.printf("  %s%n", tabulated.getPoint(i));
-        }
-    
-        // сериализация через externalizable
-        String externalizableFile = "function_externalizable.ser";
-        System.out.println("  сериализуем функцию в файл: " + externalizableFile);
-    
-        // записываем объект в файл
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(externalizableFile))) {
-            oos.writeObject(tabulated); // сериализуем объект
-        }
-    
-        System.out.println("  функция успешно сериализована через externalizable");
-    
-        // десериализация
-        System.out.println("  десериализуем функцию из файла...");
-        TabulatedFunction deserializedExternalizable;
-        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(externalizableFile))) {
-            deserializedExternalizable = (TabulatedFunction) ois.readObject(); // восстанавливаем объект
-        }
-    
-        System.out.println("  восстановленная функция через externalizable:");
-        // сравниваем исходные и восстановленные значения
-        for (int i = 0; i < deserializedExternalizable.getPointsCount(); i++) {
-            double original = tabulated.getPointY(i); // исходное значение
-            double restored = deserializedExternalizable.getPointY(i); // восстановленное значение
-            System.out.printf("  точка %d: исходная=%.6f, восстановленная=%.6f, совпадение=%s%n", 
-                i, original, restored, Math.abs(original - restored) < 1e-10 ? "да" : "нет");
-        }
-    
-        // анализируем размер файла
-        File extFile = new File(externalizableFile);
-        System.out.printf("  размер файла externalizable: %d байт%n", extFile.length());
-    
-        // дополнительное тестирование с linkedlist
-        testLinkedListExternalizable();
-    
-        // очищаем временные файлы
-        extFile.delete();
-        System.out.println("  временные файлы удалены");
-    }
-
-    private static void testLinkedListExternalizable() throws IOException, ClassNotFoundException {
-        System.out.println("\n  дополнительное тестирование: linkedlisttabulatedfunction с externalizable");
+        System.out.println("6. Тестирование Externalizable:");
         
-        System.out.println("  создаем linkedlist функцию с 4 точками...");
-        // создаем массив точек для linkedlist функции
+        // 1. Тестируем LinkedListTabulatedFunction (Externalizable)
+        System.out.println("  LinkedListTabulatedFunction (Externalizable):");
         FunctionPoint[] points = {
-            new FunctionPoint(1, 0),      // ln(1) = 0
-            new FunctionPoint(2, 0.693),  // ln(2) ≈ 0.693
-            new FunctionPoint(3, 1.099),  // ln(3) ≈ 1.099
-            new FunctionPoint(4, 1.386)   // ln(4) ≈ 1.386
+            new FunctionPoint(1, 0),
+            new FunctionPoint(2, 0.693147),
+            new FunctionPoint(3, 1.098612),
+            new FunctionPoint(4, 1.386294),
+            new FunctionPoint(5, 1.609438)
         };
-        
-        // создаем linkedlist табулированную функцию
         LinkedListTabulatedFunction linkedListFunc = new LinkedListTabulatedFunction(points);
-        
+
         String linkedListFile = "linkedlist_externalizable.ser";
-        System.out.println("  сериализуем linkedlist функцию в файл: " + linkedListFile);
-        
-        // сериализуем linkedlist функцию
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(linkedListFile))) {
             oos.writeObject(linkedListFunc);
         }
         
-        System.out.println("  десериализуем linkedlist функцию...");
-        LinkedListTabulatedFunction restoredLinkedList;
+        LinkedListTabulatedFunction deserializedLinkedList;
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(linkedListFile))) {
-            restoredLinkedList = (LinkedListTabulatedFunction) ois.readObject();
+            deserializedLinkedList = (LinkedListTabulatedFunction) ois.readObject();
+        }
+        System.out.println("  LinkedListTabulatedFunction успешно сериализована через Externalizable");
+        
+        // 2. Тестируем мета-функции с Externalizable
+        System.out.println("  Мета-функции с Externalizable:");
+        Sin sin = new Sin();
+        Cos cos = new Cos();
+        
+        // Power с Externalizable
+        Function powerFunc = Functions.power(sin, 2);
+        String powerFile = "power_externalizable.ser";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(powerFile))) {
+            oos.writeObject(powerFunc);
         }
         
-        // проверяем корректность восстановления
-        System.out.println("  linkedlist успешно восстановлен:");
-        System.out.println("  количество точек в исходной функции: " + linkedListFunc.getPointsCount());
-        System.out.println("  количество точек в восстановленной функции: " + restoredLinkedList.getPointsCount());
-        System.out.println("  восстановление прошло " + 
-            (linkedListFunc.getPointsCount() == restoredLinkedList.getPointsCount() ? "успешно" : "с ошибками"));
+        Function deserializedPower;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(powerFile))) {
+            deserializedPower = (Function) ois.readObject();
+        }
+        System.out.println("  Power успешно сериализован через Externalizable");
         
-        // очищаем временный файл
+        // Composition с Externalizable
+        Function compositionFunc = Functions.composition(sin, cos);
+        String compositionFile = "composition_externalizable.ser";
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(compositionFile))) {
+            oos.writeObject(compositionFunc);
+        }
+        
+        Function deserializedComposition;
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(compositionFile))) {
+            deserializedComposition = (Function) ois.readObject();
+        }
+        System.out.println("  Composition успешно сериализован через Externalizable");
+        
+        // Удаляем временные файлы
         new File(linkedListFile).delete();
-        System.out.println("  временный файл linkedlist удален");
+        new File(powerFile).delete();
+        new File(compositionFile).delete();
+        
+        System.out.println();
     }
 }

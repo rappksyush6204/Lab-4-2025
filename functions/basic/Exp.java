@@ -1,10 +1,12 @@
 package functions.basic;
 
-// Класс Exp реализует интерфейс Function"
+// Класс Exp реализует интерфейс Function
 import functions.Function;
+import java.io.Serializable;
 
 // Класс Exp представляет функцию e^x
-public class Exp implements Function {
+public class Exp implements Function, Serializable {
+    private static final long serialVersionUID = 1L;
     
     @Override
     // Вычисляем значение экспоненты e^x в заданной точке
@@ -27,4 +29,3 @@ public class Exp implements Function {
         return Double.POSITIVE_INFINITY;
     }
 }
-

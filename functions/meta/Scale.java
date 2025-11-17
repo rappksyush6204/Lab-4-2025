@@ -3,7 +3,7 @@ package functions.meta;
 import functions.Function;
 import java.io.*;
 
-public class Scale implements Function, Serializable, Externalizable {
+public class Scale implements Function, Externalizable {
     private static final long serialVersionUID = 1L;
     private Function f;
     private double scaleX;

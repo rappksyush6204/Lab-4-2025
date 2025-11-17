@@ -2,14 +2,14 @@ package functions;
 
 import java.io.*;
 
-public class ArrayTabulatedFunction implements TabulatedFunction, Serializable, Externalizable {
+public class ArrayTabulatedFunction implements TabulatedFunction, Serializable {
     private static final long serialVersionUID = 1L;
     private FunctionPoint[] points;
     private int pointsCount;
 
     // КОНСТРУКТОРЫ:
     
-    // Конструктор без параметров для Externalizable
+    // Конструктор без параметров для Serializable
     public ArrayTabulatedFunction() {
         this.points = new FunctionPoint[2];
         this.pointsCount = 0;
@@ -53,7 +53,7 @@ public class ArrayTabulatedFunction implements TabulatedFunction, Serializable, 
         }
     }
 
-    // ЗАДАНИЕ 1: Конструктор, получающий сразу все точки функции в виде массива объектов
+    // Конструктор, получающий сразу все точки функции в виде массива
     public ArrayTabulatedFunction(FunctionPoint[] points) throws IllegalArgumentException {
         if (points.length < 2) {
             throw new IllegalArgumentException("Количество точек не может быть меньше двух");
@@ -71,29 +71,6 @@ public class ArrayTabulatedFunction implements TabulatedFunction, Serializable, 
         
         for (int i = 0; i < pointsCount; i++) {
             this.points[i] = new FunctionPoint(points[i]);
-        }
-    }
-
-    // РЕАЛИЗАЦИЯ EXTERNALIZABLE
-    
-    @Override // метод должен переопределять метод родительского класса или интерфейса.
-    public void writeExternal(ObjectOutput out) throws IOException {
-        out.writeInt(pointsCount);
-        for (int i = 0; i < pointsCount; i++) {
-            out.writeDouble(points[i].getX());
-            out.writeDouble(points[i].getY());
-        }
-    }
-
-    @Override
-    public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-        pointsCount = in.readInt();
-        points = new FunctionPoint[pointsCount + 2];
-        
-        for (int i = 0; i < pointsCount; i++) {
-            double x = in.readDouble();
-            double y = in.readDouble();
-            points[i] = new FunctionPoint(x, y);
         }
     }
 
@@ -130,7 +107,7 @@ public class ArrayTabulatedFunction implements TabulatedFunction, Serializable, 
             double y1 = points[i].getY(); // значение в левой границе
             double y2 = points[i + 1].getY(); // значение в правой границе
             
-            // линейная интерполяция: y = y1 + (y2 - y1) * (x - x1) / (x2 - x1)
+            // линейная интерполяция
             return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
         }
     }
@@ -210,8 +187,8 @@ public class ArrayTabulatedFunction implements TabulatedFunction, Serializable, 
     // МЕТОДЫ ДЛЯ ИЗМЕНЕНИЯ КОЛИЧЕСТВА ТОЧЕК:
 
     public void deletePoint(int index) throws FunctionPointIndexOutOfBoundsException, IllegalStateException {
-        if (pointsCount < 3) {
-            throw new IllegalStateException("Нельзя удалять точки: минимальное количество точек - 3");
+        if (pointsCount <= 2) {
+            throw new IllegalStateException("Нельзя удалять точки: минимальное количество точек - 2");
         }
         
         if (index < 0 || index >= pointsCount) {

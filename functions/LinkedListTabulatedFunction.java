@@ -6,15 +6,11 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
     private static final long serialVersionUID = 1L;
     
     // Внутренний класс для узла списка
-    private static class FunctionNode implements Serializable, Externalizable {
+    private static class FunctionNode implements Serializable {
         private static final long serialVersionUID = 1L;
         private FunctionPoint point;
         private FunctionNode prev;
         private FunctionNode next;
-        
-        // Конструктор без параметров для Externalizable
-        public FunctionNode() {
-        }
         
         public FunctionNode(FunctionPoint point) {
             this.point = point;
@@ -43,22 +39,11 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
         public void setNext(FunctionNode next) {
             this.next = next;
         }
-        
-        // Реализация Externalizable для FunctionNode
-        @Override
-        public void writeExternal(ObjectOutput out) throws IOException {
-            out.writeObject(point);
-        }
-
-        @Override
-        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
-            point = (FunctionPoint) in.readObject();
-        }
     }
     
     private FunctionNode head;
     private int pointsCount;
-    private transient FunctionNode lastAccessedNode; // transient - не сериализуем
+    private transient FunctionNode lastAccessedNode; 
     private transient int lastAccessedIndex;
 
     // КОНСТРУКТОРЫ
@@ -106,6 +91,9 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
     
     // ЗАДАНИЕ 1: Конструктор с массивом точек
     public LinkedListTabulatedFunction(FunctionPoint[] points) {
+        if (points == null) {
+            throw new IllegalArgumentException("Массив точек не может быть null");
+        }
         if (points.length < 2) {
             throw new IllegalArgumentException("Количество точек не может быть меньше двух");
         }   
@@ -113,7 +101,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
         // Проверяем упорядоченность по X с учетом машинного эпсилона
         for (int i = 0; i < points.length - 1; i++) {
             if (points[i + 1].getX() - points[i].getX() < 1e-10) {
-            throw new IllegalArgumentException("Точки должны быть строго упорядочены по возрастанию X");
+                throw new IllegalArgumentException("Точки должны быть строго упорядочены по возрастанию X");
             }
         }
         
@@ -132,7 +120,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
         lastAccessedIndex = -1;
     }
     
-    // РЕАЛИЗАЦИЯ EXTERNALIZABLE
+    //EXTERNALIZABLE
     
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -346,7 +334,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
     
     @Override
     public void deletePoint(int index) {
-        if (pointsCount < 3) {
+        if (pointsCount <= 2) {
             throw new IllegalStateException("Нельзя удалить точку: должно остаться минимум 2 точки");
         }
         deleteNodeByIndex(index);
@@ -354,6 +342,10 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
     
     @Override
     public void addPoint(FunctionPoint point) throws InappropriateFunctionPointException {
+        if (point == null) {
+            throw new IllegalArgumentException("Точка не может быть null");
+        }
+        
         // Ищем позицию для вставки
         int insertIndex = pointsCount;
         for (int i = 0; i < pointsCount; i++) {
@@ -374,7 +366,7 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
         newNode.setPoint(new FunctionPoint(point));
     }
     
-    // РЕАЛИЗАЦИЯ МЕТОДОВ Function
+    // РЕАЛИЗАЦИЯ МЕТОДОВ
     
     @Override
     public double getLeftDomainBorder() {
@@ -403,19 +395,18 @@ public class LinkedListTabulatedFunction implements TabulatedFunction, Serializa
         }
         
         // оптимизация: проверяем точное совпадение с существующими точками
-        FunctionNode current = head.getNext(); // начинаем с первой точки
-        while (current != head) { // проходим по всем точкам
+        FunctionNode current = head.getNext();          // начинаем с первой точки
+        while (current != head) {                       // проходим по всем точкам
             if (Math.abs(x - current.getPoint().getX()) < 1e-10) {
-                return current.getPoint().getY(); // возвращаем значение существующей точки
+                return current.getPoint().getY();       // возвращаем значение существующей точки
             }
-            current = current.getNext(); // переходим к следующей точке
+            current = current.getNext();                // переходим к следующей точке
         }
         
-        // линейная интерполяция между точками
         FunctionNode prev = head.getNext(); // предыдущая точка
         FunctionNode next = prev.getNext(); // следующая точка
         
-        while (next != head) { // проходим по всем отрезкам
+        while (next != head) {                          // проходим по всем отрезкам
             double x1 = prev.getPoint().getX();
             double x2 = next.getPoint().getX();
             

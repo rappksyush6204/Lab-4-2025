@@ -1,9 +1,11 @@
 package functions.basic;
 
 import functions.Function;
+import java.io.Serializable;
 
 //  Класс Log представляет логарифмическую функцию logₐ(x)
-public class Log implements Function {
+public class Log implements Function, Serializable {
+    private static final long serialVersionUID = 1L;
     private double base; // Основание логарифма
     
     // Создает логарифмическую функцию с заданным основанием

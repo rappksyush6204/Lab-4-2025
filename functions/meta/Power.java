@@ -3,7 +3,7 @@ package functions.meta;
 import functions.Function;
 import java.io.*;
 
-public class Power implements Function, Serializable, Externalizable {
+public class Power implements Function, Externalizable {
     private static final long serialVersionUID = 1L;
     private Function f;
     private double power;

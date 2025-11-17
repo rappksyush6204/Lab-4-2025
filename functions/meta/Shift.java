@@ -3,7 +3,7 @@ package functions.meta;
 import functions.Function;
 import java.io.*;
 
-public class Shift implements Function, Serializable, Externalizable {
+public class Shift implements Function, Externalizable {
     private static final long serialVersionUID = 1L;
     private Function f;
     private double shiftX;
@@ -37,7 +37,7 @@ public class Shift implements Function, Serializable, Externalizable {
     // Реализация Function
     @Override
     public double getLeftDomainBorder() {
-        return f.getLeftDomainBorder() - shiftX;
+        return f.getLeftDomainBorder() + shiftX;
     }
     
     @Override
@@ -47,6 +47,6 @@ public class Shift implements Function, Serializable, Externalizable {
     
     @Override
     public double getFunctionValue(double x) {
-        return shiftY + f.getFunctionValue(x + shiftX);
+        return shiftY + f.getFunctionValue(x - shiftX);
     }
 }
